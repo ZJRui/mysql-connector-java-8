@@ -131,6 +131,22 @@ public class StatementImpl implements JdbcStatement {
      */
     public int maxRows = -1;
 
+    /**
+     *
+     * ResultSetImpl的close方法会调用 com.mysql.cj.jdbc.result.ResultSetImpl#realClose(boolean)在这个realClose方法中
+     *
+     *
+     * 在ResultSetImpl中存在属性
+     *   private com.mysql.cj.jdbc.StatementImpl owningStatement; 这个对象是ClientPreparedStatement
+     *
+     *   this.owningStatement.removeOpenResultSet(this); 表示从ClientPreparedStatement中移除ResultSetImpl
+     *   也就会说PreparedStatement中应该可以包含多个resultSet
+     *   这体现在 StatementImpl中 存在属性  protected Set<ResultSetInternalMethods> openResults = new HashSet<>();
+     *
+     *
+     *
+     */
+
     /** Set of currently-open ResultSets */
     protected Set<ResultSetInternalMethods> openResults = new HashSet<>();
 

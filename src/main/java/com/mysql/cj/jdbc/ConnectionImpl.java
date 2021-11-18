@@ -45,13 +45,7 @@ import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Struct;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -133,6 +127,11 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         this.realProxy = this.topProxy instanceof MultiHostMySQLConnection ? ((MultiHostMySQLConnection) proxy).getThisAsProxy() : null;
     }
 
+    /**
+     * 当使用多主机设置时，这个连接必须被代理，以便语句被路由到正确的物理连接
+     * //(作为逻辑连接)
+     * @return
+     */
     // this connection has to be proxied when using multi-host settings so that statements get routed to the right physical connection
     // (works as "logical" connection)
     private JdbcConnection getProxy() {
@@ -1733,6 +1732,27 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 }
 
                 try {
+                    /**
+                     *
+                     * 在Connection的close的时候我们发现会调用 closeAllOpenStatements，
+                     * 那么也就是说一个Connection会有多个Statement，这体现在ConnectionImpl中存在属性
+                     *    private final CopyOnWriteArrayList<JdbcStatement> openStatements = new CopyOnWriteArrayList<>();
+                     *
+                     *    在Statement的close方法中 又会调用 closeAllOpenResults ，也就是说一个Statement中会有多个OpenResult
+                     *
+                     *    这体现在StatementImpl中存在属性
+                     * //Set of currently-open ResultSets
+                     *protected Set<ResultSetInternalMethods> openResults = new HashSet<>();
+                     *
+                     * 其中这里的ResultSetInternalMethods 就是一个接口，这个接口继承自java.sql的ResultSet
+                     * ResultSetInternalMethods extends java.sql.ResultSet,
+                     * 也就是说ResultSetInternalMethods 就代表了ResultSet
+                     *
+                     * 因此最终会调用ResultSetImpl的close方法
+                     *
+                     *
+                     *
+                     */
                     closeAllOpenStatements();
                 } catch (SQLException ex) {
                     sqlEx = ex;

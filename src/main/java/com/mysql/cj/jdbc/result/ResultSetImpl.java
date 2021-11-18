@@ -206,6 +206,50 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     /**
      * Create a result set for an executeUpdate statement.
+     *
+     *
+     * <init>:220, ResultSetImpl (com.mysql.cj.jdbc.result), ResultSetImpl.java
+     * createFromProtocolEntity:89, ResultSetFactory (com.mysql.cj.jdbc.result), ResultSetFactory.java
+     * createFromProtocolEntity:48, ResultSetFactory (com.mysql.cj.jdbc.result), ResultSetFactory.java
+     * read:117, TextResultsetReader (com.mysql.cj.protocol.a), TextResultsetReader.java
+     * read:48, TextResultsetReader (com.mysql.cj.protocol.a), TextResultsetReader.java
+     * read:1596, NativeProtocol (com.mysql.cj.protocol.a), NativeProtocol.java
+     * readAllResults:1650, NativeProtocol (com.mysql.cj.protocol.a), NativeProtocol.java---->发送sql到sever 读取 result
+     * sendQueryPacket:959, NativeProtocol (com.mysql.cj.protocol.a), NativeProtocol.java
+     * sendQueryString:892, NativeProtocol (com.mysql.cj.protocol.a), NativeProtocol.java
+     * execSQL:1073, NativeSession (com.mysql.cj), NativeSession.java
+     * setAutoCommit:2054, ConnectionImpl (com.mysql.cj.jdbc), ConnectionImpl.java
+     * handleAutoCommitDefaults:1381, ConnectionImpl (com.mysql.cj.jdbc), ConnectionImpl.java
+     * initializePropsFromServer:1326, ConnectionImpl (com.mysql.cj.jdbc), ConnectionImpl.java
+     * connectOneTryOnly:967, ConnectionImpl (com.mysql.cj.jdbc), ConnectionImpl.java
+     * createNewIO:826, ConnectionImpl (com.mysql.cj.jdbc), ConnectionImpl.java
+     * <init>:456, ConnectionImpl (com.mysql.cj.jdbc), ConnectionImpl.java
+     * getInstance:246, ConnectionImpl (com.mysql.cj.jdbc), ConnectionImpl.java
+     * connect:198, NonRegisteringDriver (com.mysql.cj.jdbc), NonRegisteringDriver.java
+     * connection_connect:156, FilterChainImpl (com.alibaba.druid.filter), FilterChainImpl.java
+     * connection_connect:787, FilterAdapter (com.alibaba.druid.filter), FilterAdapter.java
+     * connection_connect:38, FilterEventAdapter (com.alibaba.druid.filter), FilterEventAdapter.java
+     * connection_connect:150, FilterChainImpl (com.alibaba.druid.filter), FilterChainImpl.java
+     * connection_connect:207, Catdatalog (com.bingkun.kingkong.log), Catdatalog.java
+     * connection_connect:150, FilterChainImpl (com.alibaba.druid.filter), FilterChainImpl.java
+     * connection_connect:787, FilterAdapter (com.alibaba.druid.filter), FilterAdapter.java
+     * connection_connect:38, FilterEventAdapter (com.alibaba.druid.filter), FilterEventAdapter.java
+     * connection_connect:150, FilterChainImpl (com.alibaba.druid.filter), FilterChainImpl.java
+     * connection_connect:218, StatFilter (com.alibaba.druid.filter.stat), StatFilter.java
+     * connection_connect:150, FilterChainImpl (com.alibaba.druid.filter), FilterChainImpl.java
+     * createPhysicalConnection:1646, DruidAbstractDataSource (com.alibaba.druid.pool), DruidAbstractDataSource.java
+     * createPhysicalConnection:1710, DruidAbstractDataSource (com.alibaba.druid.pool), DruidAbstractDataSource.java
+     * runInternal:2584, DruidDataSource$CreateConnectionTask (com.alibaba.druid.pool), DruidDataSource.java
+     * run:2539, DruidDataSource$CreateConnectionTask (com.alibaba.druid.pool), DruidDataSource.java
+     * call:511, Executors$RunnableAdapter (java.util.concurrent), Executors.java
+     * run:266, FutureTask (java.util.concurrent), FutureTask.java
+     * access$201:180, ScheduledThreadPoolExecutor$ScheduledFutureTask (java.util.concurrent), ScheduledThreadPoolExecutor.java
+     * run:293, ScheduledThreadPoolExecutor$ScheduledFutureTask (java.util.concurrent), ScheduledThreadPoolExecutor.java
+     * runWorker:1149, ThreadPoolExecutor (java.util.concurrent), ThreadPoolExecutor.java
+     * run:624, ThreadPoolExecutor$Worker (java.util.concurrent), ThreadPoolExecutor.java
+     * run:748, Thread (java.lang), Thread.java
+     *
+     *
      * 
      * @param ok
      *            {@link OkPacket}
@@ -1821,6 +1865,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             }
 
             try {
+                //UseUsageAdvisor, usage advisor：是否启用助手，会影响数据库性能，默认 false
                 if (this.useUsageAdvisor) {
 
                     if (!calledExplicitly) {
@@ -1859,6 +1904,17 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                     }
                 }
             } finally {
+                /**
+                 * 在ResultSetImpl中存在属性
+                 *   private com.mysql.cj.jdbc.StatementImpl owningStatement; 这个对象是ClientPreparedStatement
+                 *
+                 *   this.owningStatement.removeOpenResultSet(this); 表示从ClientPreparedStatement中移除ResultSetImpl
+                 *   也就会说PreparedStatement中应该可以包含多个resultSet
+                 *   这体现在 StatementImpl中 存在属性  protected Set<ResultSetInternalMethods> openResults = new HashSet<>();
+                 *
+                 *
+                 *
+                 */
                 if (this.owningStatement != null && calledExplicitly) {
                     this.owningStatement.removeOpenResultSet(this);
                 }
